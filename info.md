@@ -16,3 +16,7 @@ Use the AMT IP and MEBx admin credentials. Home Assistant must run on a differen
 ## 0.2.3
 
 Scheduling a wake alarm no longer fails when Home Assistant's datetime picker submits the date and time as one invalid string (`2026-09-26T00:00:00 13:15:00`). The wake time still has to be in the future.
+
+## 0.2.4
+
+The 24h power uptime sensor now reads Recorder history on Home Assistant's database executor, which removes the warning about accessing the database outside that executor. The power switch has a unique ID, so Home Assistant keeps it attached to the AMT device.

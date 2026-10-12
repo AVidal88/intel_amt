@@ -221,7 +221,7 @@ class IntelAmtPowerUptimeSensor(IntelAmtEntity, SensorEntity):
             self.async_write_ha_state()
             return
 
-        stats = await self.hass.async_add_executor_job(
+        stats = await get_instance(self.hass).async_add_executor_job(
             compute_power_uptime,
             self.hass,
             power_entity_id,

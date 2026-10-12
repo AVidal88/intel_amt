@@ -28,6 +28,10 @@ class IntelAmtPowerSwitch(IntelAmtEntity, SwitchEntity):
     _attr_translation_key = "power"
     _attr_icon = "mdi:desktop-tower"
 
+    def __init__(self, coordinator: IntelAmtCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_power"
+
     @property
     def is_on(self) -> bool | None:
         """Return true if machine is powered on."""

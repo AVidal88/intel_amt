@@ -849,6 +849,7 @@ Notes:
 - The `Last AMT event` sensor enumerates `AMT_EventLogEntry` and picks the newest by `CreationTimeStamp`. AMT caps the log at ~390 records, so pagination stays cheap.
 - Version 0.2.0 implements firmware wake alarms.
 - Version 0.2.3 fixes **Schedule wake alarm**. Home Assistant's datetime picker was submitting the date and clock as one invalid value (`2026-09-26T00:00:00 13:15:00`), so the form rejected the time before the alarm was sent to AMT. The options form and the `add_wake_alarm` service now accept that value. The wake time still has to be in the future.
+- Version 0.2.4 clears two Home Assistant warnings. The 24h uptime sensor reads Recorder history through the database executor, and the power switch now has a unique ID so it stays attached to the AMT device.
 
 
 ## License
