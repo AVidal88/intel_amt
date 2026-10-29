@@ -22,7 +22,7 @@ Reference: [rgl/intel-amt-notes](https://github.com/rgl/intel-amt-notes)
 - Real device identity on the HA device page (manufacturer, model, serial, BIOS, AMT firmware, CPU, hostname, platform GUID)
 - Diagnostic sensors for the same info so it can be used on Lovelace cards and automations
 - UI config flow — no YAML editing required
-- Options for poll interval
+- Separate polling intervals for power state and diagnostics
 
 
 
@@ -63,6 +63,23 @@ If an existing entry could not finish setup, reload it after saving to apply the
 
 Disabling verification keeps HTTPS encryption but skips certificate trust, expiry, and hostname checks, so Home Assistant cannot verify the device's identity. The setting applies only to the selected AMT device. It does not switch to HTTP or disable certificate verification for other devices or integrations.
 
+### Automatic state updates
+
+The power sensor and power switch update automatically, including changes made from the operating system, the physical power button, or another management tool. With the default interval, changes normally appear within 0–5 seconds plus AMT's response time. Slow responses or connection failures can delay detection.
+
+Open **Configure → Polling intervals** to adjust the two intervals independently:
+
+| Setting | Default | Allowed range |
+| ------- | ------- | ------------- |
+| Power state interval | 5 seconds | 2–60 seconds |
+| Diagnostics interval | 120 seconds | 30–3600 seconds |
+
+Power polling reads only the current power state and available transitions. Redirection, network, provisioning, event log, and wake alarm data use the slower diagnostic interval. Existing `scan_interval` settings continue to control diagnostics; power polling defaults to 5 seconds unless changed. Hardware and firmware identity are still read once at setup.
+
+After AMT accepts a power command, the integration requests a background power refresh and continues polling. The displayed state changes when AMT reports the new state, rather than assuming the command has already completed. **Refresh status** remains available for a manual refresh.
+
+An `unavailable` state means the integration could not read AMT's state; it does not mean the computer is off. An unknown or unrecognized power state is also not treated as `off`.
+
 ## Entities
 
 Each configured device gets:
@@ -87,7 +104,7 @@ Each configured device gets:
 
 
 
-### Redirection status (per poll)
+### Redirection status (diagnostic polling)
 
 
 | Entity                                | Description                                                                                                                                    |
@@ -98,7 +115,7 @@ Each configured device gets:
 
 
 
-### Network (per poll)
+### Network (diagnostic polling)
 
 
 | Entity                         | Description                                                                                       |
@@ -109,7 +126,7 @@ Each configured device gets:
 
 
 
-### Provisioning (per poll, diagnostic)
+### Provisioning (diagnostic polling)
 
 
 | Entity                        | Description                                                    |
@@ -120,7 +137,7 @@ Each configured device gets:
 
 
 
-### Event log (per poll, diagnostic)
+### Event log (diagnostic polling)
 
 
 | Entity                    | Description                                                                                                                                                |
@@ -853,7 +870,7 @@ Notes:
 - HA must run on a **different machine** on the LAN — a host cannot reach its own AMT.
 - **Soft-off / soft-reset** require the Intel LMS agent in the OS. Use hard off/reset otherwise.
 - When KVM/IDER is active, some power transitions return "not ready" (ReturnValue 2). Guard automations with `binary_sensor.*_kvm_session_active` or the `ider_enabled` attribute.
-- Each poll issues one WSMAN GET (power) plus five enumerations (KVM, redirection, ethernet, provisioning, event log). Negligible at the default 2-min interval; still fine at the 30-second minimum on LAN.
+- Each power poll issues one WSMAN GET. Diagnostic polling separately enumerates KVM, redirection, Ethernet, provisioning, event log, and wake alarms.
 - The `Last AMT event` sensor enumerates `AMT_EventLogEntry` and picks the newest by `CreationTimeStamp`. AMT caps the log at ~390 records, so pagination stays cheap.
 - Version 0.2.0 implements firmware wake alarms.
 - Version 0.2.3 fixes **Schedule wake alarm**. Home Assistant's datetime picker was submitting the date and clock as one invalid value (`2026-09-26T00:00:00 13:15:00`), so the form rejected the time before the alarm was sent to AMT. The options form and the `add_wake_alarm` service now accept that value. The wake time still has to be in the future.

@@ -30,16 +30,22 @@
       "init": {
         "title": "Intel AMT options",
         "menu_options": {
-          "scan_interval": "Poll interval",
+          "scan_interval": "Polling intervals",
           "tls": "TLS settings",
           "add_wake_alarm": "Schedule wake alarm",
           "manage_wake_alarms": "Delete wake alarm"
         }
       },
       "scan_interval": {
-        "title": "Poll interval",
+        "title": "Polling intervals",
+        "description": "Power state updates automatically. Diagnostics are fetched separately to reduce device traffic.",
         "data": {
-          "scan_interval": "Status poll interval (seconds)"
+          "power_scan_interval": "Power state interval (seconds)",
+          "scan_interval": "Diagnostics interval (seconds)"
+        },
+        "data_description": {
+          "power_scan_interval": "2–60 seconds; default: 5. Controls how often the power sensor and switch check the device's reported state.",
+          "scan_interval": "30–3600 seconds; default: 120. Controls redirection, network, provisioning, event log, and wake alarm updates."
         }
       },
       "tls": {

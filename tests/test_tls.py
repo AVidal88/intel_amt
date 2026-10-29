@@ -179,7 +179,7 @@ async def test_options_preserve_settings_and_reload(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    scan_interval = 300
+    expected_options = {"scan_interval": 300}
     for current_value, new_value in [(True, False), (False, True)]:
         previous_coordinator = hass.data[DOMAIN][entry.entry_id]
         with patch.object(
@@ -198,10 +198,8 @@ async def test_options_preserve_settings_and_reload(
             reload_entry.assert_awaited_once_with(entry.entry_id)
 
         assert result["type"] is FlowResultType.CREATE_ENTRY
-        assert entry.options == {
-            "scan_interval": scan_interval,
-            CONF_VERIFY_TLS: new_value,
-        }
+        expected_options[CONF_VERIFY_TLS] = new_value
+        assert entry.options == expected_options
         coordinator = hass.data[DOMAIN][entry.entry_id]
         assert coordinator is not previous_coordinator
         mock_amt_post.reset_mock()
@@ -222,5 +220,5 @@ async def test_options_preserve_settings_and_reload(
             )
             await hass.async_block_till_done()
             assert result["type"] is FlowResultType.CREATE_ENTRY
-            assert entry.options == {"scan_interval": 600, CONF_VERIFY_TLS: False}
-            scan_interval = 600
+            expected_options.update(scan_interval=600, power_scan_interval=5)
+            assert entry.options == expected_options

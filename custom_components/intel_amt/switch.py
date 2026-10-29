@@ -29,15 +29,20 @@ class IntelAmtPowerSwitch(IntelAmtEntity, SwitchEntity):
     _attr_icon = "mdi:desktop-tower"
 
     def __init__(self, coordinator: IntelAmtCoordinator) -> None:
-        super().__init__(coordinator)
+        super().__init__(coordinator.power_coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_power"
 
     @property
     def is_on(self) -> bool | None:
         """Return true if machine is powered on."""
-        if not self.coordinator.last_update_success:
+        if not self.coordinator.last_update_success or self.coordinator.data is None:
             return None
-        return self.coordinator.data.power_state == "on"
+        state = self.coordinator.data.power_state
+        if state == "on":
+            return True
+        if state in {"off", "soft-off", "standby", "sleep", "hibernate"}:
+            return False
+        return None
 
     async def async_turn_on(self, **kwargs) -> None:
         """Power on."""

@@ -138,7 +138,7 @@ class IntelAmtPowerSensor(IntelAmtEntity, SensorEntity):
     _attr_icon = "mdi:power-plug"
 
     def __init__(self, coordinator: IntelAmtCoordinator) -> None:
-        super().__init__(coordinator)
+        super().__init__(coordinator.power_coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_power"
 
     @property

@@ -6,15 +6,17 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_HOST, CONF_NAME, DOMAIN
-from .coordinator import IntelAmtCoordinator
+from .coordinator import IntelAmtCoordinator, IntelAmtPowerCoordinator
 
 
-class IntelAmtEntity(CoordinatorEntity[IntelAmtCoordinator]):
+class IntelAmtEntity(CoordinatorEntity[IntelAmtCoordinator | IntelAmtPowerCoordinator]):
     """Base class for Intel AMT entities."""
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: IntelAmtCoordinator) -> None:
+    def __init__(
+        self, coordinator: IntelAmtCoordinator | IntelAmtPowerCoordinator
+    ) -> None:
         super().__init__(coordinator)
         entry = coordinator.config_entry
         self._entry_id = entry.entry_id

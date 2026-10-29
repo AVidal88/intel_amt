@@ -106,11 +106,17 @@ class AmtAlarm:
 
 
 @dataclass
-class AmtStatus:
-    """Current AMT power state and live redirection/KVM status."""
+class AmtPowerStatus:
+    """Current power state from one lightweight WS-Man query."""
 
     power_state: str
     available_transitions: list[str]
+
+
+@dataclass
+class AmtStatus(AmtPowerStatus):
+    """Current AMT power state and live diagnostic information."""
+
     kvm_state: str | None = None
     kvm_session_active: bool | None = None
     redirection_state: str | None = None
@@ -490,22 +496,28 @@ class AmtClient:
                 transitions.append(name)
         return transitions
 
-    def get_status(self) -> AmtStatus:
-        """Return current power state plus KVM + redirection status."""
+    def get_power_status(self) -> AmtPowerStatus:
+        """Read energy state without enumerating optional diagnostics."""
         payload = self._get_request(self.uri, CIM_ASSOCIATED_POWER)
-        resp = requests.post(
-            self.uri,
-            auth=self._auth(),
-            data=payload,
-            timeout=self.timeout,
-            verify=self.verify_tls if self.protocol == "https" else True,
-        )
-        resp.raise_for_status()
+        resp = self._post(payload)
         power_text = self._find_in_xml(resp.content, "PowerState")
         if power_text is None:
             power_state = "unknown"
         else:
-            power_state = FRIENDLY.get(int(power_text), f"state-{power_text}")
+            code = int(power_text)
+            # These current-state values are not exposed as power commands.
+            power_state = "off" if code in (6, 13) else FRIENDLY.get(
+                code, f"state-{power_text}"
+            )
+
+        return AmtPowerStatus(
+            power_state=power_state,
+            available_transitions=self._parse_available_transitions(resp.content),
+        )
+
+    def get_status(self) -> AmtStatus:
+        """Return power state plus optional diagnostics for the slower poll."""
+        power = self.get_power_status()
 
         kvm_state, kvm_active = self._fetch_kvm_state()
         redirection_state, sol, ider = self._fetch_redirection_state()
@@ -515,8 +527,8 @@ class AmtClient:
         wake_alarms, next_wake = self._fetch_wake_alarms()
 
         return AmtStatus(
-            power_state=power_state,
-            available_transitions=self._parse_available_transitions(resp.content),
+            power_state=power.power_state,
+            available_transitions=power.available_transitions,
             kvm_state=kvm_state,
             kvm_session_active=kvm_active,
             redirection_state=redirection_state,

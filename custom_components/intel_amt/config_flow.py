@@ -21,9 +21,11 @@ from .const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PASSWORD,
+    CONF_POWER_SCAN_INTERVAL,
     CONF_PROTOCOL,
     CONF_USERNAME,
     CONF_VERIFY_TLS,
+    DEFAULT_POWER_SCAN_INTERVAL,
     DEFAULT_PROTOCOL,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_USERNAME,
@@ -81,14 +83,6 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
             CONF_VERIFY_TLS, default=DEFAULT_VERIFY_TLS
         ): selector.BooleanSelector(),
         vol.Optional(CONF_NAME): str,
-    }
-)
-
-SCAN_INTERVAL_SCHEMA = vol.Schema(
-    {
-        vol.Optional("scan_interval", default=DEFAULT_SCAN_INTERVAL): vol.All(
-            int, vol.Range(min=30, max=3600)
-        ),
     }
 )
 
@@ -225,7 +219,7 @@ class IntelAmtOptionsFlow(OptionsFlow):
     async def async_step_scan_interval(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage the poll interval."""
+        """Manage power and diagnostic polling intervals."""
         if user_input is not None:
             return self.async_create_entry(
                 title="",
@@ -234,13 +228,21 @@ class IntelAmtOptionsFlow(OptionsFlow):
 
         return self.async_show_form(
             step_id="scan_interval",
-            data_schema=self.add_suggested_values_to_schema(
-                SCAN_INTERVAL_SCHEMA,
+            data_schema=vol.Schema(
                 {
-                    "scan_interval": self.config_entry.options.get(
-                        "scan_interval", DEFAULT_SCAN_INTERVAL
-                    ),
-                },
+                    vol.Optional(
+                        CONF_POWER_SCAN_INTERVAL,
+                        default=self.config_entry.options.get(
+                            CONF_POWER_SCAN_INTERVAL, DEFAULT_POWER_SCAN_INTERVAL
+                        ),
+                    ): vol.All(int, vol.Range(min=2, max=60)),
+                    vol.Optional(
+                        "scan_interval",
+                        default=self.config_entry.options.get(
+                            "scan_interval", DEFAULT_SCAN_INTERVAL
+                        ),
+                    ): vol.All(int, vol.Range(min=30, max=3600)),
+                }
             ),
         )
 

@@ -57,7 +57,7 @@ async def _pxe_boot(coordinator: IntelAmtCoordinator) -> None:
 
 
 async def _refresh(coordinator: IntelAmtCoordinator) -> None:
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh_all()
 
 
 BUTTONS: tuple[IntelAmtButtonDescription, ...] = (
